@@ -9,26 +9,52 @@ use Illuminate\Http\Request;
 class ConfirmacaoController extends Controller
 {
     // Listar confirmações de um aluno
-    public function getConfirmacoesPorAluno(Request $request)
+    public function getConfirmacoesPorTurma(Request $request)
     {
-
         try {
-
             $request->validate([
-                'idAluno' => 'required|exists:tb_aluno,idAluno',
+                'idTurma' => 'required|exists:tb_turma,idTurma',
             ], [
-                'idAluno.required' => 'O campo Aluno é obrigatório.',
-                'idAluno.exists' => 'O aluno informado não existe.'
+                'idTurma.required' => 'O campo Aluno é obrigatório.',
+                'idTurma.exists' => 'O aluno informado não existe.'
             ]);
+            $dataFiltro = $request->input('dataFiltro') ? date('Y-m-d', strtotime($request->input('dataFiltro'))) : null;
+            $statusFrequencia = $request->input('statusFrequencia'); // 'presente', 'ausente' ou null
 
-            $confirmacoes = AlunoTurma::with(['turma', 'usuarioRegistro', 'usuarioTermino'])
-                ->where('idAluno', $request->input('idAluno'))
-                ->orderByDesc('idAlunoTurma')
-                ->get();
+            $items = $request->input('items', 15);
+            $page = $request->input('page', 1);
+
+            $query = AlunoTurma::with(['turma', 'aluno', 'frequencias', 'usuarioRegistro', 'usuarioTermino'])
+                ->where('idTurma', $request->input('idTurma'))
+                ->whereHas('aluno', function ($query) {
+                    $query->where('eliminado', false);
+                })
+                ->where('terminado', false)
+                ->when($statusFrequencia === 'presente' && $dataFiltro, function ($query) use ($dataFiltro) {
+                    $query->whereHas('frequencias', function ($q) use ($dataFiltro) {
+                        $q->whereDate('dataFrequencia', $dataFiltro);
+                    });
+                })
+                ->when($statusFrequencia === 'ausente' && $dataFiltro, function ($query) use ($dataFiltro) {
+                    $query->whereDoesntHave('frequencias', function ($q) use ($dataFiltro) {
+                        $q->whereDate('dataFrequencia', $dataFiltro);
+                    });
+                })
+                ->orderByDesc('idAlunoTurma');
+
+            $confirmacoes = $query->paginate($items, ['*'], 'page', $page);
+            $paginacao = [
+                'totalPages' => $confirmacoes->lastPage(),
+                'totalItems' => $confirmacoes->total(),
+                'items' => $confirmacoes->perPage(),
+                'page' => $confirmacoes->currentPage(),
+            ];
+
 
             return response()->json([
                 'message' => 'Confirmações encontradas com sucesso.',
-                'body' => $confirmacoes,
+                'body' => $confirmacoes->items(),
+                'paginacao' => $paginacao ?? null
             ], 200);
         } catch (\Throwable $th) {
             return response()->json([

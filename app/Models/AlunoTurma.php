@@ -43,6 +43,10 @@ class AlunoTurma extends Model
         return $this->belongsTo(Usuario::class, 'idUsuarioRegistro', 'idUsuario');
     }
 
+    public function frequencias()
+    {
+        return $this->hasMany(Frequencia::class, 'idAlunoTurma', 'idAlunoTurma');
+    }
 
     public function usuarioTermino()
     {

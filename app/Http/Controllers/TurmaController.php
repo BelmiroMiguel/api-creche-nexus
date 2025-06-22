@@ -101,7 +101,14 @@ class TurmaController extends Controller
             $searchableFields = ['nome'];
             $value = $request->input('value');
 
-            $query = Turma::with(['educador', 'usuarioRegistro', 'alunos']);
+            $query = Turma::with([
+                'educador',
+                'usuarioRegistro',
+                'alunos',
+                'confirmacoes',
+                'confirmacoes.aluno',
+                'confirmacoes.frequencias',
+            ]);
 
             if ($value) {
                 $query->where(function ($q) use ($searchableFields, $value) {

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AlunoController;
 use App\Http\Controllers\ConfirmacaoController;
 use App\Http\Controllers\EmpresaController;
+use App\Http\Controllers\FrequenciaController;
 use App\Http\Controllers\TurmaController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Http\Request;
@@ -55,9 +56,16 @@ Route::prefix('confirmacoes')->middleware('auth:sanctum')->group(function () {
     Route::post('/', [ConfirmacaoController::class, 'confirmar']);
     Route::post('/encerrar', [ConfirmacaoController::class, 'encerrar']);
     Route::post('/trocar-turma', [ConfirmacaoController::class, 'trocarTurma']);
-    Route::get('/aluno/{idAluno}', [ConfirmacaoController::class, 'getConfirmacoesPorAluno']);
+    Route::get('/', [ConfirmacaoController::class, 'getConfirmacoesPorTurma']);
 });
 
+
+
+Route::prefix('frequencia')->middleware('auth:sanctum')->group(function () {
+    Route::post('/entrada', [FrequenciaController::class, 'registrarEntrada']);
+    Route::post('/saida', [FrequenciaController::class, 'registrarSaida']);
+    Route::post('/atualizar', [FrequenciaController::class, 'atualizarFrequencia']);
+});
 
 
 Route::get('/user', function (Request $request) {

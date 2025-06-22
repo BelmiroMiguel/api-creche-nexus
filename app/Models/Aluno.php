@@ -29,6 +29,15 @@ class Aluno extends Model
         'grauParentesco',
         'idUsuarioRegistro',
         'genero',
+        'nomeResponsavel2',
+        'telefoneResponsavel2',
+        'grauParentesco2',
+        'nomeResponsavel3',
+        'telefoneResponsavel3',
+        'grauParentesco3',
+        'nomeResponsavel4',
+        'telefoneResponsavel4',
+        'grauParentesco4',
     ];
 
     protected $casts = [
@@ -47,7 +56,7 @@ class Aluno extends Model
         return $this->turmas->sortByDesc('pivot.idAlunoTurma')->first();
     }
 
-    //aluno turma
+    
     public function confirmacoes()
     {
         return $this->hasMany(AlunoTurma::class, 'idAluno')->latest('idAlunoTurma');

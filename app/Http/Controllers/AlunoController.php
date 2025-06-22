@@ -12,19 +12,53 @@ class AlunoController extends Controller
 {
     public function cadastrarAluno(Request $request)
     {
+        $camposOpcionais = [
+            'nomeResponsavel2',
+            'telefoneResponsavel2',
+            'grauParentesco2',
+            'nomeResponsavel3',
+            'telefoneResponsavel3',
+            'grauParentesco3',
+            'nomeResponsavel4',
+            'telefoneResponsavel4',
+            'grauParentesco4',
+        ];
+
+        // Força os campos a existirem com valor null se não vierem
+        foreach ($camposOpcionais as $campo) {
+            if (!$request->has($campo)) {
+                $request->merge([$campo => null]);
+            }
+        }
+
         try {
             $validator = $request->validate([
                 'nome' => 'required|string|max:255',
                 'identificacao' => 'nullable|string|unique:tb_aluno,identificacao',
                 'nomeResponsavel' => 'required|string|max:255',
                 'identificacaoResponsavel' => 'required|string',
-                'telefoneResponsavel' => 'required|string',
+                'telefoneResponsavel' => ['required', 'string', 'regex:/^9\d{8}$/'],
                 'dataNascimento' => 'required|date',
                 'endereco' => 'required|string|max:255',
                 'observacao' => 'sometimes|string|nullable',
                 'genero' => 'required|string|in:m,f',
                 'emailResponsavel' => 'sometimes|email|max:255',
                 'grauParentesco' => 'required|string|max:100',
+
+                // Responsável 2
+                'nomeResponsavel2' => 'sometimes|required_with:telefoneResponsavel2,grauParentesco2|max:255',
+                'telefoneResponsavel2' => ['sometimes',],
+                'grauParentesco2' => 'sometimes|required_with:nomeResponsavel2,telefoneResponsavel2|max:100',
+
+                // Responsável 3
+                'nomeResponsavel3' => 'sometimes|required_with:telefoneResponsavel3,grauParentesco3|max:255',
+                'telefoneResponsavel3' => ['sometimes',],
+                'grauParentesco3' => 'sometimes|required_with:nomeResponsavel3,telefoneResponsavel3|max:100',
+
+                // Responsável 4
+                'nomeResponsavel4' => 'sometimes|required_with:telefoneResponsavel4,grauParentesco4|max:255',
+                'telefoneResponsavel4' => ['sometimes',],
+                'grauParentesco4' => 'sometimes|required_with:nomeResponsavel4,telefoneResponsavel4|max:100',
             ], [
                 'nome.required' => 'Campo nome é obrigatório',
                 'nome.string' => 'O nome deve ser um texto.',
@@ -38,6 +72,7 @@ class AlunoController extends Controller
                 'identificacaoResponsavel.string' => 'A identificação do responsável deve ser um texto.',
                 'telefoneResponsavel.required' => 'Campo telefone do responsável é obrigatório',
                 'telefoneResponsavel.string' => 'O telefone do responsável deve ser um texto.',
+                'telefoneResponsavel.regex' => 'O telefone do responsável inválido.',
                 'dataNascimento.required' => 'Campo data de nascimento é obrigatório',
                 'dataNascimento.date' => 'A data de nascimento deve ser uma data válida.',
                 'endereco.required' => 'Campo endereço é obrigatório',
@@ -48,6 +83,26 @@ class AlunoController extends Controller
                 'grauParentesco.required' => 'Campo grau de parentesco é obrigatório',
                 'grauParentesco.string' => 'O grau de parentesco deve ser um texto.',
                 'grauParentesco.max' => 'O grau de parentesco não pode exceder 100 caracteres.',
+                'emailResponsavel.email' => 'O e-mail deve ser um endereço de e-mail válido.',
+                'emailResponsavel.max' => 'O e-mail não pode exceder 255 caracteres.',
+
+                // Mensagens específicas para responsável 2
+                'nomeResponsavel2.required_with' => 'O nome do segundo responsável é obrigatório quando o telefone ou o grau de parentesco for informado.',
+                'telefoneResponsavel2.required_with' => 'O telefone do segundo responsável é obrigatório quando o nome ou o grau de parentesco for informado.',
+                'telefoneResponsavel2.regex' => 'O telefone do segundo responsável inválido',
+                'grauParentesco2.required_with' => 'O grau de parentesco do segundo responsável é obrigatório quando o nome ou o telefone for informado.',
+
+                // Responsável 3
+                'nomeResponsavel3.required_with' => 'O nome do terceiro responsável é obrigatório quando o telefone ou o grau de parentesco for informado.',
+                'telefoneResponsavel3.required_with' => 'O telefone do terceiro responsável é obrigatório quando o nome ou o grau de parentesco for informado.',
+                'telefoneResponsavel3.regex' => 'O telefone do terceiro responsável inválido',
+                'grauParentesco3.required_with' => 'O grau de parentesco do terceiro responsável é obrigatório quando o nome ou o telefone for informado.',
+
+                // Responsável 4
+                'nomeResponsavel4.required_with' => 'O nome do quarto responsável é obrigatório quando o telefone ou o grau de parentesco for informado.',
+                'telefoneResponsavel4.required_with' => 'O telefone do quarto responsável é obrigatório quando o nome ou o grau de parentesco for informado.',
+                'telefoneResponsavel4.regex' => 'O telefone do quarto responsável inválido',
+                'grauParentesco4.required_with' => 'O grau de parentesco do quarto responsável é obrigatório quando o nome ou o telefone for informado.',
             ]);
 
             // Se uma imagem foi enviada, armazene-a e salve o caminho
@@ -209,6 +264,25 @@ class AlunoController extends Controller
         try {
             $aluno = Aluno::where('idAluno', $request->input('idAluno'))->first();
 
+            $camposOpcionais = [
+                'nomeResponsavel2',
+                'telefoneResponsavel2',
+                'grauParentesco2',
+                'nomeResponsavel3',
+                'telefoneResponsavel3',
+                'grauParentesco3',
+                'nomeResponsavel4',
+                'telefoneResponsavel4',
+                'grauParentesco4',
+            ];
+
+            // Força os campos a existirem com valor null se não vierem
+            foreach ($camposOpcionais as $campo) {
+                if (!$request->has($campo)) {
+                    $request->merge([$campo => null]);
+                }
+            }
+
             $validator = $request->validate([
                 'nome' => 'sometimes|string|max:255',
                 'identificacao' => 'sometimes|string|unique:tb_aluno,identificacao,' . $aluno->idAluno . ',idAluno',
@@ -222,6 +296,21 @@ class AlunoController extends Controller
                 'observacao' => 'sometimes|string|nullable',
                 'eliminado' => 'sometimes|boolean',
                 'genero' => 'sometimes|required|string|in:m,f',
+
+                // Responsável 2
+                'nomeResponsavel2' => 'sometimes|required_with:telefoneResponsavel2,grauParentesco2|max:255',
+                'telefoneResponsavel2' => ['sometimes',],
+                'grauParentesco2' => 'sometimes|required_with:nomeResponsavel2,telefoneResponsavel2|max:100',
+
+                // Responsável 3
+                'nomeResponsavel3' => 'sometimes|required_with:telefoneResponsavel3,grauParentesco3|max:255',
+                'telefoneResponsavel3' => ['sometimes',],
+                'grauParentesco3' => 'sometimes|required_with:nomeResponsavel3,telefoneResponsavel3|max:100',
+
+                // Responsável 4
+                'nomeResponsavel4' => 'sometimes|required_with:telefoneResponsavel4,grauParentesco4|max:255',
+                'telefoneResponsavel4' => ['sometimes',],
+                'grauParentesco4' => 'sometimes|required_with:nomeResponsavel4,telefoneResponsavel4|max:100',
             ], [
                 'nome.required' => 'Campo nome é obrigatório',
                 'nome.string' => 'O nome deve ser um texto.',
@@ -248,6 +337,24 @@ class AlunoController extends Controller
                 'emailResponsavel.max' => 'O e-mail do responsável não pode exceder 255 caracteres.',
                 'grauParentesco.string' => 'O grau de parentesco deve ser um texto.',
                 'grauParentesco.max' => 'O grau de parentesco não pode exceder 100 caracteres.',
+
+                // Mensagens específicas para responsável 2
+                'nomeResponsavel2.required_with' => 'O nome do segundo responsável é obrigatório quando o telefone ou o grau de parentesco for informado.',
+                'telefoneResponsavel2.required_with' => 'O telefone do segundo responsável é obrigatório quando o nome ou o grau de parentesco for informado.',
+                'telefoneResponsavel2.regex' => 'O telefone do segundo responsável inválido',
+                'grauParentesco2.required_with' => 'O grau de parentesco do segundo responsável é obrigatório quando o nome ou o telefone for informado.',
+
+                // Responsável 3
+                'nomeResponsavel3.required_with' => 'O nome do terceiro responsável é obrigatório quando o telefone ou o grau de parentesco for informado.',
+                'telefoneResponsavel3.required_with' => 'O telefone do terceiro responsável é obrigatório quando o nome ou o grau de parentesco for informado.',
+                'telefoneResponsavel3.regex' => 'O telefone do terceiro responsável inválido',
+                'grauParentesco3.required_with' => 'O grau de parentesco do terceiro responsável é obrigatório quando o nome ou o telefone for informado.',
+
+                // Responsável 4
+                'nomeResponsavel4.required_with' => 'O nome do quarto responsável é obrigatório quando o telefone ou o grau de parentesco for informado.',
+                'telefoneResponsavel4.required_with' => 'O telefone do quarto responsável é obrigatório quando o nome ou o grau de parentesco for informado.',
+                'telefoneResponsavel4.regex' => 'O telefone do quarto responsável inválido',
+                'grauParentesco4.required_with' => 'O grau de parentesco do quarto responsável é obrigatório quando o nome ou o telefone for informado.',
             ]);
 
             // Se uma imagem foi enviada, armazene-a e salve o caminho

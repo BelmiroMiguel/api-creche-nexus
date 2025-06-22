@@ -48,8 +48,17 @@ class Turma extends Model
     {
         return $this->belongsToMany(Aluno::class, 'tb_aluno_turma', 'idTurma', 'idAluno')
             ->wherePivot('terminado', false)
-            ->where('tb_aluno.eliminado', false)
-            ->withPivot('idTurma', 'idAluno');
+            ->where('tb_aluno.eliminado', false);
+    }
+
+    public function confirmacoes()
+    {
+        return $this->hasMany(AlunoTurma::class, 'idTurma')
+            ->whereHas('aluno', function ($query) {
+                $query->where('eliminado', false);
+            })
+            ->where('terminado', false)
+            ->latest('idAlunoTurma');
     }
 
 
