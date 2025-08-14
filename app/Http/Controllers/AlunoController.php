@@ -163,6 +163,7 @@ class AlunoController extends Controller
         try {
             $items = $request->input('items', 15);
             $page = $request->input('page', 1);
+            $periodo = $request->input('periodo');
 
             $filterableFields = [
                 'eliminado',
@@ -181,6 +182,8 @@ class AlunoController extends Controller
             $value = $request->input('value');
             $query = Aluno::with([
                 'usuarioRegistro',
+                'confirmacoes',
+                'confirmacoes.turma',
                 'confirmacoes.turma.educador',
                 'confirmacoes.usuarioRegistro',
                 'confirmacoes.usuarioTermino',
@@ -208,7 +211,7 @@ class AlunoController extends Controller
 
                 if ($confirmacaoTerminado === 0) {
                     // Confirmados → última confirmação com terminado = 0
-                    $query->whereIn('idAluno', function ($sub) {
+                    $query->whereIn('idAluno', function ($sub) use ($periodo) {
                         $sub->select('idAluno')
                             ->from('tb_aluno_turma as at')
                             ->whereIn('idAlunoTurma', function ($sub2) {
@@ -217,21 +220,25 @@ class AlunoController extends Controller
                                     ->groupBy('idAluno');
                             })
                             ->where('terminado', 0);
+
+                        $this->filtrarPorPeriodo($sub, $periodo);
                     });
                 } else {
                     // Não confirmados → sem nenhuma confirmação OU última com terminado = 1
-                    $query->where(function ($q) {
-                        $q->whereNotIn('idAluno', function ($sub) {
-                            $sub->select('idAluno')
-                                ->from('tb_aluno_turma as at')
-                                ->whereIn('idAlunoTurma', function ($sub2) {
-                                    $sub2->selectRaw('MAX(idAlunoTurma)')
-                                        ->from('tb_aluno_turma')
-                                        ->groupBy('idAluno');
-                                })
-                                ->where('terminado', 0);
+                    if (!$periodo) {
+                        $query->where(function ($q) use ($periodo) {
+                            $q->whereNotIn('idAluno', function ($sub) use ($periodo) {
+                                $sub->select('idAluno')
+                                    ->from('tb_aluno_turma as at')
+                                    ->whereIn('idAlunoTurma', function ($sub2) {
+                                        $sub2->selectRaw('MAX(idAlunoTurma)')
+                                            ->from('tb_aluno_turma')
+                                            ->groupBy('idAluno');
+                                    })
+                                    ->where('terminado', 0);
+                            });
                         });
-                    });
+                    } else $this->filtrarPorPeriodo($query, $periodo);
                 }
             }
 
@@ -256,6 +263,15 @@ class AlunoController extends Controller
                 'error' => 'Erro interno!',
                 'message' => $th->getMessage(),
             ], 500);
+        }
+    }
+
+    function filtrarPorPeriodo($query, $periodo)
+    {
+        if (!empty($periodo)) {
+            [$ano, $mes] = explode('-', $periodo);
+            $query->whereYear('dataCadastro', $ano)
+                ->whereMonth('dataCadastro', $mes);
         }
     }
 

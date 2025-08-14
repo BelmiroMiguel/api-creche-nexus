@@ -16,13 +16,13 @@ class ConfirmacaoController extends Controller
                 'idTurma' => 'required|exists:tb_turma,idTurma',
             ], [
                 'idTurma.required' => 'O campo Aluno é obrigatório.',
-                'idTurma.exists' => 'O aluno informado não existe.'
+                'idTurma.exists' => 'A turma informada não existe.'
             ]);
             $dataFiltro = $request->input('dataFiltro') ? date('Y-m-d', strtotime($request->input('dataFiltro'))) : null;
             $statusFrequencia = $request->input('statusFrequencia'); // 'presente', 'ausente' ou null
 
             $items = $request->input('items', 15);
-            $page = $request->input('page', 1);
+            $page = $request->input('page',);
 
             $query = AlunoTurma::with(['turma', 'aluno', 'frequencias', 'usuarioRegistro', 'usuarioTermino'])
                 ->where('idTurma', $request->input('idTurma'))
@@ -42,18 +42,32 @@ class ConfirmacaoController extends Controller
                 })
                 ->orderByDesc('idAlunoTurma');
 
-            $confirmacoes = $query->paginate($items, ['*'], 'page', $page);
-            $paginacao = [
-                'totalPages' => $confirmacoes->lastPage(),
-                'totalItems' => $confirmacoes->total(),
-                'items' => $confirmacoes->perPage(),
-                'page' => $confirmacoes->currentPage(),
-            ];
+
+            $paginacao = [];
+
+            if ($page && $page > 0) {
+                $confirmacoes = $query->paginate($items, ['*'], 'page', $page);
+                $paginacao = [
+                    'totalPages' => $confirmacoes->lastPage(),
+                    'totalItems' => $confirmacoes->total(),
+                    'items' => $confirmacoes->perPage(),
+                    'page' => $confirmacoes->currentPage(),
+                ];
+                $confirmacoes = $confirmacoes->items();
+            } else {
+                $confirmacoes = $query->get();
+                $paginacao = [
+                    'totalPages' => 1,
+                    'totalItems' => count($confirmacoes),
+                    'items' => 0,
+                    'page' => 1,
+                ];
+            }
 
 
             return response()->json([
                 'message' => 'Confirmações encontradas com sucesso.',
-                'body' => $confirmacoes->items(),
+                'body' => $confirmacoes,
                 'paginacao' => $paginacao ?? null
             ], 200);
         } catch (\Throwable $th) {
