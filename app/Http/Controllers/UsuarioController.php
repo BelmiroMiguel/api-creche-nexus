@@ -86,7 +86,7 @@ class UsuarioController extends Controller
 
             if (!$usuario || !Hash::check($request->input('senha'), $usuario->senha)) {
                 return response()->json([
-                    'message' => 'Usuário ou senha inválidos',
+                    'message' => 'Usuário ou senha inválidos ',
                 ], 403);
             }
 
