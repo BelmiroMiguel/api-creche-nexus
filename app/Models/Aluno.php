@@ -56,7 +56,7 @@ class Aluno extends Model
         return $this->turmas->sortByDesc('pivot.idAlunoTurma')->first();
     }
 
-    
+
     public function confirmacoes()
     {
         return $this->hasMany(AlunoTurma::class, 'idAluno')->latest('idAlunoTurma');
@@ -68,12 +68,70 @@ class Aluno extends Model
     }
 
 
-    protected $appends = ['imagem', 'confirmacao'];
+    protected $appends = ['imagem', 'confirmacao', 'idade', 'faixaEtaria'];
 
     public function getImagemAttribute()
     {
         return $this->srcImagem
             ? url('api/alunos/imagem/' . $this->srcImagem)
             : url('api/usuarios/imagem/default-usuario.webp');
+    }
+    // no model Aluno
+    public function getIdadeAttribute()
+    {
+        if (!$this->dataNascimento) {
+            return null;
+        }
+
+        try {
+            $nasc = $this->dataNascimento instanceof \Illuminate\Support\Carbon
+                ? $this->dataNascimento
+                : \Illuminate\Support\Carbon::parse($this->dataNascimento);
+
+            $hoje = \Illuminate\Support\Carbon::today();
+
+            $anos = $nasc->diffInYears($hoje);   // sempre inteiro
+            $meses = $nasc->diffInMonths($hoje); // sempre inteiro
+
+            $anos = floor($nasc->diffInYears($hoje));
+            $meses = floor($nasc->diffInMonths($hoje));
+
+            if ($anos > 0) {
+                return $anos . ' ' . ($anos == 1 ? 'ano' : 'anos');
+            }
+
+            return $meses . ' ' . ($meses == 1 ? 'mês' : 'meses');
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    public function getFaixaEtariaAttribute()
+    {
+        if (!$this->dataNascimento) {
+            return null;
+        }
+
+        try {
+            $nasc = $this->dataNascimento instanceof \Illuminate\Support\Carbon
+                ? $this->dataNascimento
+                : \Illuminate\Support\Carbon::parse($this->dataNascimento);
+
+            $hoje = \Illuminate\Support\Carbon::today();
+
+            $anos = $nasc->diffInYears($hoje);   // sempre inteiro
+            $meses = $nasc->diffInMonths($hoje); // sempre inteiro
+
+            $anos = floor($nasc->diffInYears($hoje));
+            $meses = floor($nasc->diffInMonths($hoje));
+
+            if ($anos > 0) {
+                return $anos . 'a';
+            }
+
+            return $meses . 'm';
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

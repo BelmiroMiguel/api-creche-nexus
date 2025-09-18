@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('telefoneResponsavel2', 20)->nullable();
             $table->string('telefoneResponsavel3', 20)->nullable();
             $table->string('telefoneResponsavel4', 20)->nullable();
+            $table->string('emailResponsavel', 255)->nullable();
             $table->unsignedBigInteger('idUsuarioRegistro')->nullable();
 
             $table->foreign('idUsuarioRegistro')->references('idUsuario')->on('tb_usuario');
@@ -80,17 +81,28 @@ return new class extends Migration
         Schema::create('tb_frequencia_aluno_turma', function (Blueprint $table) {
             $table->bigIncrements('idFrequenciaAlunoTurma');
             $table->unsignedBigInteger('idAlunoTurma')->nullable();
-            $table->timestamp('dataHoraEntrada')->nullable();
-            $table->timestamp('dataHoraSaida')->nullable();
-            $table->string('observacao', 255)->nullable();
-            $table->enum('statusPresenca', ['presente', 'ausente'])->default('ausente');
-            $table->string('responsavelEntrega', 150)->nullable();
-            $table->string('responsavelBusca', 150)->nullable();
-            $table->boolean('eliminado')->default(false);
             $table->unsignedBigInteger('idUsuarioRegistro')->nullable();
+            $table->time('horaEntrada')->nullable();
+            $table->time('horaSaida')->nullable();
+            $table->string('observacaoEntrada', 255)->nullable();
+            $table->string('observacaoSaida', 255)->nullable();
+            $table->string('nomeResponsavelEntrega', 150)->nullable();
+            $table->string('nomeResponsavelBusca', 150)->nullable();
+            $table->boolean('eliminado')->default(false);
+            $table->date('dataFrequencia')->nullable();
+            $table->timestamp('dataCadastro')->useCurrent();
 
             $table->foreign('idAlunoTurma')->references('idAlunoTurma')->on('tb_aluno_turma');
             $table->foreign('idUsuarioRegistro')->references('idUsuario')->on('tb_usuario');
+
+
+
+            $table->string('responsavelEntrega', 150)->nullable();
+            $table->string('responsavelBusca', 150)->nullable();
+            $table->enum('statusPresenca', ['presente', 'ausente'])->default('ausente');
+            $table->string('observacao', 255)->nullable();
+            $table->timestamp('dataHoraEntrada')->nullable();
+            $table->timestamp('dataHoraSaida')->nullable();
         });
     }
 

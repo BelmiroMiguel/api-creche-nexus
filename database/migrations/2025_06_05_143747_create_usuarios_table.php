@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('tb_usuario', function (Blueprint $table) {
             $table->bigIncrements('idUsuario');
             $table->string('nome', 150)->nullable();
+            $table->string('srcImagem', 150)->nullable();
             $table->string('genero', 150)->nullable();
             $table->string('endereco', 255)->nullable();
             $table->date('dataNascimento')->nullable();

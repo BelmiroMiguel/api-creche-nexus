@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\AlunoController;
+use App\Http\Controllers\AtividaeSistemaController;
 use App\Http\Controllers\ConfirmacaoController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FrequenciaController;
+use App\Http\Controllers\MensalidadePagamentoController;
 use App\Http\Controllers\TurmaController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Http\Request;
@@ -26,6 +28,7 @@ Route::prefix('usuarios')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/editar', [UsuarioController::class, 'updateUsuario']);
         Route::get('/', [UsuarioController::class, 'getUsuarios']);
+        Route::get('/id', [UsuarioController::class, 'getById']);
         Route::get('/count', [UsuarioController::class, 'countUsuarios']);
     });
 });
@@ -37,6 +40,7 @@ Route::prefix('alunos')->group(function () {
         Route::post('/editar', [AlunoController::class, 'updateAluno']);
         Route::get('/', [AlunoController::class, 'getAlunos']);
         Route::get('/count', [AlunoController::class, 'countAlunos']);
+        Route::get('/ultimos-meses', [AlunoController::class, 'getAlunosResumoUltimosMeses']);
         Route::get('/{id}', [AlunoController::class, 'getAluno']);
     });
 
@@ -66,6 +70,24 @@ Route::prefix('frequencia')->middleware('auth:sanctum')->group(function () {
     Route::post('/saida', [FrequenciaController::class, 'registrarSaida']);
     Route::post('/atualizar', [FrequenciaController::class, 'atualizarFrequencia']);
 });
+
+
+Route::middleware('auth:sanctum')->prefix('mensalidades')->group(function () {
+    Route::get('/', [MensalidadePagamentoController::class, 'getMensalidaeFaixaEtaria']);
+    Route::put('/', [MensalidadePagamentoController::class, 'atualizarMensalidaeFaixaEtaria']);
+});
+
+
+Route::middleware('auth:sanctum')->prefix('propinas')->group(function () {
+    Route::get('/', [MensalidadePagamentoController::class, 'getAlunosMensalidades']);
+    Route::get('/count', [MensalidadePagamentoController::class, 'countAlunosMensalidades']);
+    Route::post('/', [MensalidadePagamentoController::class, 'pagarMensalidade']);
+});
+
+Route::middleware('auth:sanctum')->prefix('atividades')->group(function () {
+    Route::get('/', [AtividaeSistemaController::class, 'index']);
+});
+
 
 
 Route::get('/user', function (Request $request) {

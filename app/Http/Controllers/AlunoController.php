@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Aluno;
+use App\Models\AlunoTurma;
 use App\Models\Usuario;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -105,6 +107,15 @@ class AlunoController extends Controller
                 'grauParentesco4.required_with' => 'O grau de parentesco do quarto responsável é obrigatório quando o nome ou o telefone for informado.',
             ]);
 
+            $dataNascimento = \Carbon\Carbon::parse($request->input('dataNascimento'));
+            $hoje = \Carbon\Carbon::today();
+
+            if ($dataNascimento->diffInMonths($hoje) < 1) {
+                return response()->json([
+                    'message' => 'O aluno deve ter pelo menos 1 mês',
+                ], 401);
+            }
+
             // Se uma imagem foi enviada, armazene-a e salve o caminho
             if ($request->hasFile('imagem')) {
                 $file = $request->file('imagem');
@@ -191,7 +202,7 @@ class AlunoController extends Controller
 
             // Aplica filtro de busca genérica
             if ($value) {
-                $query->where(function ($q) use ($searchableFields, $value) {
+                $query->where(column: function ($q) use ($searchableFields, $value) {
                     foreach ($searchableFields as $field) {
                         $q->orWhere($field, 'like', "%{$value}%")
                             ->orWhere($field, $value);
@@ -265,6 +276,55 @@ class AlunoController extends Controller
             ], 500);
         }
     }
+
+    public function getAlunosResumoUltimosMeses(Request $request)
+    {
+        try {
+            $hoje = Carbon::now();
+            $inicio = $hoje->copy()->subMonths(4)->startOfMonth(); // últimos 5 meses (inclui mês atual)
+
+            $alunos = AlunoTurma::selectRaw('YEAR(dataCadastro) as ano, MONTH(dataCadastro) as mes, COUNT(*) as quantidade')
+                ->where('terminado', false)
+                ->whereBetween('dataCadastro', [$inicio, $hoje])
+                ->groupBy('ano', 'mes')
+                ->orderBy('ano')
+                ->orderBy('mes')
+                ->get();
+
+            // Mapeia nomes dos meses em PT
+            $mesesPT = [
+                1 => 'Janeiro',
+                2 => 'Fevereiro',
+                3 => 'Março',
+                4 => 'Abril',
+                5 => 'Maio',
+                6 => 'Junho',
+                7 => 'Julho',
+                8 => 'Agosto',
+                9 => 'Setembro',
+                10 => 'Outubro',
+                11 => 'Novembro',
+                12 => 'Dezembro'
+            ];
+
+            $resultado = $alunos->map(function ($item) use ($mesesPT) {
+                return [
+                    'mes' => $mesesPT[$item->mes] . ' de ' . $item->ano,
+                    'valor' => $item->quantidade
+                ];
+            })->values();
+
+            return response()->json([
+                'body' => $resultado
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'error' => 'Erro interno!',
+                'message' => $th->getMessage(),
+            ], 500);
+        }
+    }
+
 
     function filtrarPorPeriodo($query, $periodo)
     {
@@ -372,6 +432,19 @@ class AlunoController extends Controller
                 'telefoneResponsavel4.regex' => 'O telefone do quarto responsável inválido',
                 'grauParentesco4.required_with' => 'O grau de parentesco do quarto responsável é obrigatório quando o nome ou o telefone for informado.',
             ]);
+
+
+            if ($request->input('dataNascimento')) {
+                $dataNascimento = \Carbon\Carbon::parse($request->input('dataNascimento'));
+                $hoje = \Carbon\Carbon::today();
+
+                if ($dataNascimento->diffInMonths($hoje) < 1) {
+                    return response()->json([
+                        'message' => 'O aluno deve ter pelo menos 1 mês',
+                    ], 401);
+                }
+            }
+
 
             // Se uma imagem foi enviada, armazene-a e salve o caminho
             if ($request->hasFile('imagem')) {

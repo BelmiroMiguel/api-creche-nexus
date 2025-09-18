@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Aluno;
 use App\Models\AlunoTurma;
+use App\Models\AtividadeSistemaNotificacao;
 use App\Models\Turma;
 use Illuminate\Http\Request;
 
@@ -95,7 +97,6 @@ class ConfirmacaoController extends Controller
                 ]
             );
 
-
             $usuario = $request->user();
             if (!$usuario || !isset($usuario->idUsuario)) {
                 return response()->json(['message' => 'Usuário autenticado não encontrado.'], 401);
@@ -129,6 +130,19 @@ class ConfirmacaoController extends Controller
                 ], 422);
             }
 
+            $nomeAluno = Aluno::where('idAluno', $request->idAluno)->value('nome');
+            $nomeTurma = Turma::where('idTurma', $request->idTurma)->value('nome');
+
+            AtividadeSistemaNotificacao::create([
+                'descricao' => "
+                     <span class='descricao-atividade'
+                        >Nova confirmação: <strong>$nomeAluno</strong> (Turma $nomeTurma)
+                    </span>
+                ",
+                'icon' => ' fas fa-user-plus ; color: #f0a038c0 '
+            ]);
+
+
             // Cria a confirmação de vinculação
             $alunoTurma = AlunoTurma::create([
                 'idAluno' => $request->idAluno,
@@ -137,6 +151,7 @@ class ConfirmacaoController extends Controller
                 'dataCadastro' => now(),
                 'terminado' => false
             ]);
+
 
             return response()->json([
                 'message' => 'Confirmação vinculada com sucesso.',
@@ -162,8 +177,18 @@ class ConfirmacaoController extends Controller
                 'idAlunoTurma.exists' => 'A turma de confirmação informada não existe.'
             ]);
 
-            $alunoTurma = AlunoTurma::where('idAlunoTurma', $request->input('idAlunoTurma'))->firstOrFail();
+            $alunoTurma = AlunoTurma::with('aluno')->where('idAlunoTurma', $request->input('idAlunoTurma'))->firstOrFail();
             $usuario = $request->user();
+
+            AtividadeSistemaNotificacao::create([
+                'descricao' => "
+                    <span class='descricao-atividade'>
+                      Confirmação terminada para <strong>{$alunoTurma->aluno->nome}</strong>
+                    </span>
+                ",
+                'icon' => ' fas fa-user-slash ; color: #b81d02c0'
+            ]);
+
 
             $alunoTurma->update([
                 'terminado' => true,
@@ -220,9 +245,19 @@ class ConfirmacaoController extends Controller
             }
 
             // Encerra a confirmação atual, se existir e não estiver terminada
-            $alunoTurmaAtual = AlunoTurma::where('idAluno', $request->idAluno)
+            $alunoTurmaAtual = AlunoTurma::with(['aluno', 'turma'])->where('idAluno', $request->idAluno)
                 ->where('terminado', false)
                 ->first();
+
+            AtividadeSistemaNotificacao::create([
+                'descricao' => "
+                    <span class='descricao-atividade'>
+                      Mudança de turma: <strong>{$alunoTurmaAtual->aluno->nome}</strong> para (Turma {$alunoTurmaAtual->turma->nome})
+                    </span>
+                ",
+                'icon' => ' fa-solid fa-person-arrow-up-from-line ; color: #02b8a9c0'
+            ]);
+
 
             if ($alunoTurmaAtual) {
                 $alunoTurmaAtual->update([

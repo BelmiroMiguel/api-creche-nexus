@@ -108,6 +108,37 @@ class UsuarioController extends Controller
             ], 500);
         }
     }
+
+
+
+    public function getById(Request $request)
+    {
+        try {
+            $usuario = Usuario::where('idUsuario', $request->only('idUsuario'))->first();
+
+            if (!$usuario) {
+                return response()->json([
+                    'message' => 'Usuário não encontrado ',
+                ], 403);
+            }
+
+            $empresa = Empresa::first();
+            $usuario['empresa'] = $empresa;
+
+            return response()->json([
+                'message' => 'Usuario carregado com sucesso!',
+                'body' => $usuario,
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Erro de validação',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+
     public function getUsuarios(Request $request)
     {
         try {
